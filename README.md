@@ -27,3 +27,9 @@ Not: Kod gizli tutulmalı, kodu bilen kayıtları görür. Bağlanmadan önce bi
 
 ## Güncelleme
 Dosyaları değiştirip tekrar yüklemeniz yeterli. Uygulama bir sonraki açılışta yeni sürümü alır.
+
+## Uyku sesi
+
+Ana sayfadaki "Uyku sesi" bölümünde hazır sesler (beyaz gürültü, fan, yağmur, kalp atışı, müzik kutusu) var.
+"Dosya ekle" ile telefondan kendi mp3/m4a/wav dosyalarınızı seçebilirsiniz. Dosyalar o telefonda saklanır, her telefona ayrı eklenir.
+Ekran kilitlenince Android'de ses devam eder. iPhone'da kesilirse "Ekran kendiliğinden kapanmasın" kutusunu işaretleyin.

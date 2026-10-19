@@ -16,6 +16,12 @@
 body{margin:0;font:14px system-ui,-apple-system,"Segoe UI",sans-serif}
 img{max-width:100%}
 [hidden]{display:none!important}
+#music .uchip{display:inline-flex;gap:2px}
+#music .uchip .chip:first-child{border-top-right-radius:0;border-bottom-right-radius:0}
+#music .chip.x{border-top-left-radius:0;border-bottom-left-radius:0;padding:0 12px;min-width:40px;color:var(--muted)}
+#music input[type=range]{width:100%;max-width:360px;accent-color:var(--accent);min-height:32px}
+#music .chk{display:flex;gap:10px;align-items:center;margin-top:14px;font-size:14px}
+#music .chk input{width:20px;height:20px}
 </style>
 <title>Uyku Merdiveni</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -177,6 +183,8 @@ input[type=time],input[type=date]{font:500 18px var(--font-body);min-height:44px
       <p class="sub" style="font-size:13px">Yatışı her 2-3 günde 15 dakika öne çekin, 19:00-19:30 aralığına kadar.</p>
     </div>
   </section>
+
+  <section class="card" id="music"></section>
 
   <section class="card" id="sync" aria-live="polite"></section>
 
@@ -562,6 +570,7 @@ input[type=time],input[type=date]{font:500 18px var(--font-body);min-height:44px
   })();
 })();
 </script>
+<script src="player.js"></script>
 <script type="module" src="firebase-sync.js"></script>
 <script>
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})});}
