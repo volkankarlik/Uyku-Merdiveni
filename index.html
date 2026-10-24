@@ -275,6 +275,29 @@ input[type=time],input[type=date]{font:500 18px var(--font-body);min-height:44px
     return d.getTime();
   }
   function isSleep(r){return r.kind==='nap'||r.kind==='night'}
+  /* Kayıtlardan bebeğin gerçek uyanık kalma süresini çıkarır: her gündüz uykusundan önceki uyanıklık. */
+  function personalWindow(f,now){
+    var base=windowFor(f),t=now.getTime(),ev=[],i,r;
+    for(i=0;i<records.length;i++){r=records[i];
+      if(isSleep(r)&&r.end)ev.push({t:r.end});
+      if(r.kind==='wake')ev.push({t:r.start});
+    }
+    ev.sort(function(a,b){return a.t-b.t});
+    var naps=records.filter(function(r){return r.kind==='nap'&&r.start<=t&&r.start>=t-14*86400000}).sort(function(a,b){return b.start-a.start});
+    var vals=[];
+    for(i=0;i<naps.length&&vals.length<10;i++){
+      var prev=0;for(var k=0;k<ev.length;k++){if(ev[k].t<=naps[i].start)prev=ev[k].t;else break;}
+      var d=prev?(naps[i].start-prev)/60000:0;
+      if(d>=30&&d<=360)vals.push(d);
+    }
+    if(vals.length<4)return {w:base,personal:false,n:vals.length};
+    vals.sort(function(a,b){return a-b});
+    var med=vals.length%2?vals[(vals.length-1)/2]:(vals[vals.length/2-1]+vals[vals.length/2])/2;
+    var half=(base[1]-base[0])/2;
+    var lo=Math.max(base[0]-45,Math.min(base[1]+45-2*half,med-half));
+    var wnd=[Math.round(lo/5)*5,Math.round((lo+2*half)/5)*5];
+    return {w:wnd,personal:true,n:vals.length,med:Math.round(med)};
+  }
   function dsOf(ms){var d=new Date(ms);d.setHours(4,0,0,0);if(ms<d.getTime())d.setDate(d.getDate()-1);return d.getTime()}
   function dayLabel(dk,now){var t=dayStart(now);if(dk===t)return 'Bugün';if(dk===dsOf(t-12*3600e3))return 'Dün';return new Date(dk).toLocaleDateString('tr-TR',{weekday:'long',day:'numeric',month:'long'})}
 
@@ -321,8 +344,8 @@ input[type=time],input[type=date]{font:500 18px var(--font-body);min-height:44px
 
   /* ---------- render ---------- */
   function renderStatus(now){
-    var st=derive(now),a=age(now),w=windowFor(a.f),h='',t=now.getTime(),nx=null;
-    $('age').textContent=a.none?'Bebeğinizin doğum tarihini girin':a.m+' ay '+a.d+' gün · uyanık kalma penceresi '+(w[0]/60).toString().replace('.',',')+'-'+(w[1]/60).toString().replace('.',',')+' saat';
+    var st=derive(now),a=age(now),pw=personalWindow(a.f,now),w=pw.w,h='',t=now.getTime(),nx=null;
+    $('age').textContent=a.none?'Bebeğinizin doğum tarihini girin':a.m+' ay '+a.d+' gün · uyanık kalma penceresi '+(w[0]/60).toString().replace('.',',')+'-'+(w[1]/60).toString().replace('.',',')+' saat'+(pw.personal?' (kayıtlarınıza göre)':'');
     if(st.ongoing){
       var o=st.ongoing,el=(t-o.start)/60000;
       h+='<div class="card"><h2 style="margin-bottom:4px">Şimdi</h2>';
