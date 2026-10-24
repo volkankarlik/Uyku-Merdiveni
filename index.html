@@ -22,6 +22,13 @@ img{max-width:100%}
 #music input[type=range]{width:100%;max-width:360px;accent-color:var(--accent);min-height:32px}
 #music .chk{display:flex;gap:10px;align-items:center;margin-top:14px;font-size:14px}
 #music .chk input{width:20px;height:20px}
+#remind .chk{display:flex;gap:10px;align-items:center;font-size:15px;font-weight:600}
+#remind .chk input{width:20px;height:20px}
+.mot{background:var(--surface2);border-left:4px solid var(--accent)}
+.mot p{margin:0;font-size:15px}
+#stage h2{margin-bottom:6px;text-transform:none;letter-spacing:0;font-size:17px}
+#stage ul{margin:8px 0 0;padding-left:18px;display:grid;gap:6px;font-size:14px}
+#stage .nap{margin:0;font-weight:600}
 </style>
 <title>Uyku Merdiveni</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -156,6 +163,10 @@ input[type=time],input[type=date]{font:500 18px var(--font-body);min-height:44px
 
   <section id="status" aria-live="polite"></section>
 
+  <section class="card mot" id="mot" hidden></section>
+
+  <section class="card" id="stage" hidden></section>
+
   <section>
     <h2>Uyutma sırası</h2>
     <ol class="steps" id="steps"></ol>
@@ -182,7 +193,14 @@ input[type=time],input[type=date]{font:500 18px var(--font-body);min-height:44px
       <input id="bed" type="time" value="20:00">
       <p class="sub" style="font-size:13px">Yatışı her 2-3 günde 15 dakika öne çekin, 19:00-19:30 aralığına kadar.</p>
     </div>
+    <div class="field" style="margin:16px 0 0">
+      <label for="birth">Bebeğin doğum tarihi</label>
+      <input id="birth" type="date">
+      <p class="sub" style="font-size:13px">Uyku penceresi yaşa göre değişir. Bu bilgi yalnızca bu telefonda saklanır, eşinizin telefonunda da girin.</p>
+    </div>
   </section>
+
+  <section class="card" id="remind" hidden></section>
 
   <section class="card" id="music"></section>
 
@@ -201,6 +219,8 @@ input[type=time],input[type=date]{font:500 18px var(--font-body);min-height:44px
 <div id="sheet" hidden></div>
 <div id="toast" hidden></div>
 
+<script src="reminders.js"></script>
+<script src="guide.js"></script>
 <script>
 (function(){
   var LAD=[
@@ -215,7 +235,7 @@ input[type=time],input[type=date]{font:500 18px var(--font-body);min-height:44px
   var CRY=['Hiç','Az','Orta','Çok'];
   var LS='uyku-merdiveni-v1', LSS='uyku-merdiveni-ayar';
   var records=[], dbCol=null, imported=false, pendingDel=null, sheet=null, toastTimer=null;
-  var settings={target:3,bed:'20:00'};
+  var settings={target:3,bed:'20:00',birth:''};
   function $(id){return document.getElementById(id)}
   try{var s=JSON.parse(localStorage.getItem(LSS)||'null'); if(s) settings=Object.assign(settings,s);}catch(e){}
   try{records=JSON.parse(localStorage.getItem(LS)||'[]');}catch(e){records=[];}
@@ -227,12 +247,26 @@ input[type=time],input[type=date]{font:500 18px var(--font-body);min-height:44px
   function hhmm(ms){var d=new Date(ms);return pad(d.getHours())+':'+pad(d.getMinutes())}
   function dur(min){min=Math.max(0,Math.round(min));var h=Math.floor(min/60),m=min%60;return h?h+'sa '+m+'dk':m+'dk'}
   function dayKey(ms){var d=new Date(ms);return d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate()}
+  function parseBirth(v){var p=/^(\d{4})-(\d{2})-(\d{2})$/.exec(v||'');if(!p)return null;var d=new Date(+p[1],+p[2]-1,+p[3]);return isNaN(d.getTime())?null:d}
   function age(now){
-    var m=(now.getFullYear()-2026)*12+now.getMonth()-1, d=now.getDate()-20;
+    var b=parseBirth(settings.birth);
+    if(!b||b.getTime()>now.getTime())return {m:0,d:0,f:NaN,none:true};
+    var m=(now.getFullYear()-b.getFullYear())*12+now.getMonth()-b.getMonth(), d=now.getDate()-b.getDate();
     if(d<0){m--;d+=new Date(now.getFullYear(),now.getMonth(),0).getDate();}
     return {m:m,d:d,f:m+d/30};
   }
-  function windowFor(f){return f>=7.5?[150,180]:[135,165]}
+  /* Yaklaşık ortalamalar, kişiye göre değişir. 6-9 ay aralığı ilk sürümle aynı. */
+  function windowFor(f){
+    if(isNaN(f))return [150,180];
+    if(f<4)return [75,105];
+    if(f<6)return [105,135];
+    if(f<7.5)return [135,165];
+    if(f<9)return [150,180];
+    if(f<12)return [180,210];
+    if(f<15)return [195,240];
+    return [210,270];
+  }
+  function napsPerDay(f){if(isNaN(f)||f<9)return 3;if(f<15)return 2;return 1}
   function dayStart(now){var d=new Date(now);d.setHours(4,0,0,0);if(now.getTime()<d.getTime())d.setDate(d.getDate()-1);return d.getTime()}
   function tsFromInput(v){
     var p=(v||'00:00').split(':'),d=new Date();
@@ -287,15 +321,15 @@ input[type=time],input[type=date]{font:500 18px var(--font-body);min-height:44px
 
   /* ---------- render ---------- */
   function renderStatus(now){
-    var st=derive(now),a=age(now),w=windowFor(a.f),h='',t=now.getTime();
-    $('age').textContent=a.m+' ay '+a.d+' gün · uyanık kalma penceresi '+(w[0]/60).toString().replace('.',',')+'-'+(w[1]/60).toString().replace('.',',')+' saat';
+    var st=derive(now),a=age(now),w=windowFor(a.f),h='',t=now.getTime(),nx=null;
+    $('age').textContent=a.none?'Bebeğinizin doğum tarihini girin':a.m+' ay '+a.d+' gün · uyanık kalma penceresi '+(w[0]/60).toString().replace('.',',')+'-'+(w[1]/60).toString().replace('.',',')+' saat';
     if(st.ongoing){
       var o=st.ongoing,el=(t-o.start)/60000;
       h+='<div class="card"><h2 style="margin-bottom:4px">Şimdi</h2>';
       h+='<p class="big">Uyuyor · '+dur(el)+'</p>';
       h+='<p class="sub">'+(o.kind==='night'?'Gece uykusu':'Gündüz uykusu')+', '+hhmm(o.start)+'’te daldı</p>';
       if(o.kind==='nap'&&el>120)h+='<p class="hint">Gündüz uykusu 2 saati geçti. Akşam yatışı için nazikçe uyandırabilirsiniz.</p>';
-      if(o.kind==='night')h+='<p class="sub next">Gece uyanırsa önce en hafif basamağı deneyin (emzik, ses, dokunuş), sonra bir üst basamağa çıkın. Gaz ya da diş ağrısı varsa önce onu rahatlatın.</p>';
+      if(o.kind==='night')h+='<p class="sub next">'+UykuGuide.night(a.f)+'</p>';
       h+='<div class="actions"><button class="btn" data-act="wake">Uyandı</button><button class="btn sec" data-act="nw">Gece uyanması</button></div></div>';
     }else if(!st.lastWake){
       h+='<div class="card"><h2 style="margin-bottom:4px">Şimdi</h2><p class="big">Son uyanış saatini girin</p>';
@@ -305,7 +339,8 @@ input[type=time],input[type=date]{font:500 18px var(--font-body);min-height:44px
       var e=(t-st.lastWake)/60000,min=w[0],max=w[1];
       var ws=st.lastWake+min*60000,we=st.lastWake+max*60000;
       var bedParts=settings.bed.split(':'),bd=new Date(now);bd.setHours(+bedParts[0]||20,+bedParts[1]||0,0,0);
-      var night=st.naps>=3||ws>=new Date(now).setHours(17,45,0,0);
+      var night=st.naps>=napsPerDay(a.f)||ws>=new Date(now).setHours(17,45,0,0);
+      nx={ws:ws,we:we,night:night,bed:bd.getTime(),n:st.naps+1};
       var cls,label;
       if(e<min){cls='';label='Henüz erken, '+dur(min-e)+' sonra pencere açılıyor'}
       else if(e<=max){cls='open';label='Uyku penceresi açık'}
@@ -323,18 +358,16 @@ input[type=time],input[type=date]{font:500 18px var(--font-body);min-height:44px
       }
       h+='<div class="actions"><button class="btn" data-act="sleep">Uyudu</button><button class="btn sec" data-act="nw">Gece uyanması</button><button class="btn sec small" data-act="marker">Uyanıklığı işle</button></div></div>';
     }
+    if(a.none)h='<div class="card"><h2 style="margin-bottom:8px">Önce doğum tarihi</h2><p class="sub" style="margin:0 0 10px">Uyku penceresi ve gündüz uyku sayısı bebeğin yaşına göre hesaplanır.</p><div class="actions" style="margin-top:0"><input id="birth-top" type="date" aria-label="Doğum tarihi" max="'+new Date().toISOString().slice(0,10)+'"><button class="btn" data-act="savebirth">Kaydet</button></div></div>'+h;
+    var bt=document.getElementById('birth-top');var keep=bt?bt.value:'';
     $('status').innerHTML=h;
+    bt=document.getElementById('birth-top');if(bt&&keep)bt.value=keep;
+    try{if(window.sleepRemind)window.sleepRemind(nx);}catch(e){}
   }
 
   function renderSteps(){
     var tg=settings.target;
-    $('steps').innerHTML=
-      '<li><b>Hazırlık.</b> Oda loş, hep aynı ninni ya da beyaz gürültü. Bez ve açlığı kontrol edin.</li>'+
-      '<li><b>Uykulu ama uyanıkken beşiğe koyun.</b> Gözler kapanmak üzereyken koymak yeterli.</li>'+
-      '<li><b>Hedef basamaktan başlayın: '+LAD[tg].n.toLowerCase()+'.</b> Her basamakta yaklaşık 5 dakika kalın. Ağlama inip çıkıyorsa süreyi uzatabilirsiniz.</li>'+
-      '<li><b>Sakinleşmezse bir üst basamağa çıkın</b> ve aynı seansta geri inmeyin.</li>'+
-      '<li><b>Kucağa ya da emzirmeye geçtiyseniz,</b> sakinleşince uykuya dalmadan beşiğe indirin ve orada bitirin.</li>'+
-      '<li><b>40 dakikayı geçtiyse</b> ya da bebek çok yorulduysa uykuyu destekli bitirin. Bu geri adım sayılmaz.</li>';
+    $('steps').innerHTML=UykuGuide.steps(age(new Date()).f,LAD[tg].n.toLowerCase());
     var h='';
     for(var i=0;i<LAD.length;i++){
       h+='<li><button class="rung" data-rung="'+i+'" aria-pressed="'+(i===tg)+'"><span class="sw l'+i+'"></span><span><span class="nm">'+LAD[i].n+'</span><span class="ds">'+LAD[i].d+'</span></span><span class="tg">'+(i===tg?'Hedef':'')+'</span></button></li>';
@@ -347,20 +380,24 @@ input[type=time],input[type=date]{font:500 18px var(--font-body);min-height:44px
   }
 
   function renderReady(){
-    var tg=settings.target,last=sleepsSorted().slice(0,6),h='';
-    if(tg===0){h='<p>Hedefiniz desteksiz uyku. Kayıt tutmaya devam edin.</p>';}
+    var tg=settings.target,last=sleepsSorted().slice(0,6),h='',fa=age(new Date()).f;
+    if(UykuGuide.ready(fa)){h='<p>'+UykuGuide.ready(fa)+'</p>';}
+    else if(tg===0){h='<p>Hedefiniz desteksiz uyku. Kayıt tutmaya devam edin.</p>';}
     else if(last.length<4){h='<p>Birkaç uyku kaydedince hedefi azaltma zamanının gelip gelmediği burada görünür.</p>';}
     else{
       var ok=last.filter(function(r){return r.support<=tg}).length;
       var heavy=last.filter(function(r){return r.cry===3}).length;
       if(heavy>=3){
-        h='<p>Son '+last.length+' uykunun '+heavy+'’ünde ağlama yoğundu. Hedefi şimdilik düşürmeyin. Diş ya da 8. ay atağı geçene kadar aynı basamakta, hatta bir üstte kalmak makul.</p>';
+        h='<p>Son '+last.length+' uykunun '+heavy+'’ünde ağlama yoğundu. '+UykuGuide.heavy(fa)+'</p>';
       }else if(ok>=Math.ceil(last.length*2/3)){
         h='<p>Son '+last.length+' uykunun '+ok+'’i hedef basamakta ya da altında bitti. Hedefi bir basamak azaltmaya hazırsınız: <b>'+LAD[tg].n+'</b> yerine <b>'+LAD[tg-1].n+'</b>.</p><button class="btn small" data-act="lower">Hedefi azalt</button>';
       }else{
         h='<p>Son '+last.length+' uykunun '+ok+'’i hedef basamakta ya da altında bitti. Aynı basamakta devam edin, henüz erken.</p>';
       }
     }
+    var sl=last.filter(function(r){return typeof r.settle==='number'&&r.settle>0}).slice(0,6);
+    if(sl.length>=3){var avg=Math.round(sl.reduce(function(a,r){return a+r.settle},0)/sl.length);var half=Math.floor(sl.length/2),newer=sl.slice(0,half),older=sl.slice(half);var an=newer.reduce(function(a,r){return a+r.settle},0)/newer.length,ao=older.reduce(function(a,r){return a+r.settle},0)/older.length;
+      h+='<p class="sub" style="margin:8px 0 0">Son '+sl.length+' uykuda ortalama '+avg+' dk’da daldı'+(an<ao-3?', süre kısalıyor.':an>ao+3?', süre uzuyor.':'.')+'</p>';}
     $('ready').innerHTML=h;
   }
 
@@ -418,7 +455,7 @@ input[type=time],input[type=date]{font:500 18px var(--font-body);min-height:44px
     var tr='';
     if(thisW.length>=3&&prevW.length>=3){
       var a1=avg(thisW),a0=avg(prevW),df=a1-a0;
-      tr='Ortalama destek basamağı '+a1.toFixed(1).replace('.',',')+', önceki hafta '+a0.toFixed(1).replace('.',',')+'. '+(df<-0.2?'Aşağı iniyor, yön doğru.':df>0.2?'Bu hafta biraz yükseldi. Diş ve atak dönemlerinde bu beklenir.':'Yerinde duruyor.');
+      tr='Ortalama destek basamağı '+a1.toFixed(1).replace('.',',')+', önceki hafta '+a0.toFixed(1).replace('.',',')+'. '+(df<-0.2?'Aşağı iniyor, yön doğru.':df>0.2?'Bu hafta biraz yükseldi. '+UykuGuide.trend(age(now).f):'Yerinde duruyor.');
     }else if(thisW.length>=1){
       tr='Bu hafta '+thisW.length+' uyku kaydı var. Haftalık eğilim, iki hafta kayıt olunca görünür.';
     }
@@ -427,7 +464,31 @@ input[type=time],input[type=date]{font:500 18px var(--font-body);min-height:44px
 
   function render(){
     var now=new Date();
-    renderStatus(now);renderSteps();renderReady();renderToday(now);renderWeek(now);
+    renderStatus(now);renderStage(now);renderMot(now);renderSteps();renderReady();renderToday(now);renderWeek(now);
+  }
+  function renderStage(now){
+    var a=age(now),el=$('stage');
+    if(a.none){el.hidden=true;return;}
+    var g=UykuGuide.stage(a.f),h='<h2>'+g.title+'</h2><p class="nap">'+g.nap+'</p><ul>';
+    g.points.forEach(function(t){h+='<li>'+t+'</li>'});
+    el.innerHTML=h+'</ul>';el.hidden=false;
+  }
+  function renderMot(now){
+    var el=$('mot'),a=age(now);
+    if(a.none){el.hidden=true;return;}
+    var t=now.getTime(),ctx='genel',last=sleepsSorted().slice(0,6);
+    var recent=records.filter(function(r){return r.start>=t-24*3600e3&&r.start<=t});
+    var cry3=recent.filter(function(r){return r.cry===3}).length;
+    var nightNw=recent.some(function(r){return r.kind==='nw'&&r.start>=t-10*3600e3});
+    var better=false;
+    if(last.length>=4){
+      var h2=Math.floor(last.length/2),nw=last.slice(0,h2),od=last.slice(h2);
+      var av=function(l,k){return l.reduce(function(x,r){return x+(typeof r[k]==='number'?r[k]:0)},0)/l.length};
+      better=av(nw,'support')<av(od,'support')-0.2||(av(nw,'settle')>0&&av(nw,'settle')<av(od,'settle')-3);
+    }
+    if(cry3>=1)ctx='zor';else if(better)ctx='iyi';else if(nightNw)ctx='gece';
+    var day=Math.floor((t-new Date(2026,0,1).getTime())/86400000);
+    el.innerHTML='<p>'+UykuGuide.motivation(ctx,day)+'</p>';el.hidden=false;
   }
 
   /* ---------- sheet ---------- */
@@ -501,6 +562,7 @@ input[type=time],input[type=date]{font:500 18px var(--font-body);min-height:44px
     var b=ev.target.closest('button');if(!b)return;
     var act=b.getAttribute('data-act');
     if(act==='sleep'||act==='wake'||act==='nw'||act==='marker'){pendingDel=null;openSheet(act);return;}
+    if(act==='savebirth'){var bv=($('birth-top')||{}).value;if(!parseBirth(bv)||parseBirth(bv).getTime()>Date.now()){toast('Geçerli bir doğum tarihi seçin');return;}settings.birth=bv;saveSettings();$('birth').value=bv;render();return;}
     if(act==='cancel'){closeSheet();return;}
     if(act==='save'){saveSheet();return;}
     if(act==='lower'){settings.target=Math.max(0,settings.target-1);saveSettings();render();return;}
@@ -528,6 +590,7 @@ input[type=time],input[type=date]{font:500 18px var(--font-body);min-height:44px
     if(ev.target.id==='f-time'&&sheet)sheet.time=ev.target.value;
     if(ev.target.id==='f-end'&&sheet)sheet.endTime=ev.target.value;
     if(ev.target.id==='f-date'&&sheet)sheet.date=ev.target.value;
+    if(ev.target.id==='birth'){var nb=ev.target.value;if(parseBirth(nb)&&parseBirth(nb).getTime()<=Date.now()){settings.birth=nb;saveSettings();render();}else if(nb){toast('Geçerli bir doğum tarihi seçin');}return;}
     if(ev.target.id==='bed'){settings.bed=ev.target.value||'20:00';saveSettings();renderStatus(new Date());}
   });
   document.addEventListener('keydown',function(ev){if(ev.key==='Escape'&&sheet)closeSheet();});
@@ -543,7 +606,7 @@ input[type=time],input[type=date]{font:500 18px var(--font-body);min-height:44px
     $('imp-box').value='';
     toast(add.length+' kayıt eklendi'+(list.length-add.length?', '+(list.length-add.length)+' tanesi zaten vardı':''));
   });
-  $('bed').value=settings.bed;
+  $('bed').value=settings.bed;$('birth').value=settings.birth||'';
   render();
   setInterval(function(){if(!sheet)renderStatus(new Date());},30000);
 

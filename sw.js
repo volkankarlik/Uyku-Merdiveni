@@ -1,5 +1,5 @@
-var V = 'uyku-v2';
-var SHELL = ['./', 'index.html', 'config.js', 'firebase-sync.js', 'player.js', 'sounds/beyaz.m4a', 'sounds/fan.m4a', 'sounds/yagmur.m4a', 'sounds/kalp.m4a', 'sounds/muzik.m4a', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png'];
+var V = 'uyku-v3';
+var SHELL = ['./', 'index.html', 'config.js', 'firebase-sync.js', 'player.js', 'reminders.js', 'guide.js', 'sounds/beyaz.m4a', 'sounds/fan.m4a', 'sounds/yagmur.m4a', 'sounds/kalp.m4a', 'sounds/muzik.m4a', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png'];
 self.addEventListener('install', function (e) {
   e.waitUntil(caches.open(V).then(function (c) { return c.addAll(SHELL); }).then(function () { return self.skipWaiting(); }));
 });
