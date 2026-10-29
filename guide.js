@@ -224,6 +224,39 @@
     { t: 'Uyku ve yatıştırma müdahaleleri, hızlı derleme (Sax Institute)', u: 'https://www.saxinstitute.org.au/wp-content/uploads/Sleep-and-Settling-Interventions-Evidence-Check.pdf' }
   ];
 
+  /* Ay ay uyanıklık penceresi (dakika). Kaynaklar birbirinden farklı, ortak aralık alındı, genişlik 1 saat. */
+  var WIN = { 4: [90, 150], 5: [105, 165], 6: [120, 180], 7: [135, 195], 8: [150, 210], 9: [165, 225], 10: [180, 240],
+    11: [180, 240], 12: [195, 255], 13: [195, 255], 14: [195, 255], 15: [270, 330], 16: [270, 330], 17: [270, 330], 18: [300, 360] };
+  var NAPCOUNT = { 4: '3-4', 5: '3', 6: '2-3', 7: '2-3', 8: '2 (bazen 3)', 9: '2', 10: '2', 11: '2', 12: '2 (bazen 1)', 13: '2', 14: '2 (bazen 1)', 15: '1', 16: '1', 17: '1', 18: '1' };
+  var NAPL = { 4: [90, 90, 60], 5: [90, 90, 45], 6: [90, 75, 40], 7: [90, 75, 40], 8: [100, 80], 9: [90, 90], 10: [90, 90], 11: [90, 75],
+    12: [90, 60], 13: [90, 60], 14: [90, 60], 15: [120], 16: [120], 17: [120], 18: [120] };
+  function win(f) {
+    if (isNaN(f)) f = 8;
+    if (f < 1) return [45, 90];
+    if (f < 2) return [60, 105];
+    if (f < 3) return [75, 120];
+    if (f < 4) return [90, 135];
+    return WIN[Math.min(18, Math.floor(f))];
+  }
+  var GEN = { 1: [120], 2: [90, 75], 3: [90, 75, 40], 4: [75, 75, 60, 30] };
+  function autoNaps(f) { if (isNaN(f)) return 3; if (f < 4) return 4; if (f < 8) return 3; if (f < 15) return 2; return 1; }
+  function sample(f, wake, bed, n) {
+    var m = Math.floor(f);
+    if (isNaN(f) || m < 4) return null;
+    var def = NAPL[Math.min(18, m)], L = (n > 0 && n !== def.length && GEN[n]) ? GEN[n] : def, sum = L.reduce(function (a, b) { return a + b; }, 0);
+    var gap = Math.round((bed - wake - sum) / (L.length + 1) / 5) * 5, t = wake, rows = [{ k: 'Uyanış', a: wake }];
+    L.forEach(function (len, i) { var s = t + gap; rows.push({ k: (i + 1) + '. uyku', a: s, b: s + len }); t = s + len; });
+    rows.push({ k: 'Yatış', a: bed });
+    var w = win(f);
+    return { rows: rows, gap: gap, win: w, ok: gap >= w[0] - 10 && gap <= w[1] + 10, last: bed - t };
+  }
+  var WIN_SOURCES = [
+    { t: 'Sleep Lady: yaşa göre uyanıklık süreleri', u: 'https://sleeplady.com/baby-sleep/wake-windows-by-age/' },
+    { t: 'Newton Baby: aya göre uyanıklık süreleri', u: 'https://newtonbaby.com/blogs/parenting-kids/wake-windows-by-age' },
+    { t: 'Cradlewise: ilk yıl uyku düzeni', u: 'https://cradlewise.com/blog/baby-sleep-schedule-first-year' },
+    { t: 'Little Ones: bebek uyku programı', u: 'https://www.littleones.co/blogs/our-blog/baby-sleep-schedule' }
+  ];
+
   function stage(f) {
     if (isNaN(f)) f = 8;
     for (var i = 0; i < STAGES.length; i++) if (f < STAGES[i].max) return STAGES[i];
@@ -232,6 +265,11 @@
 
   window.UykuGuide = {
     stage: stage,
+    autoNaps: autoNaps,
+    win: win,
+    sample: sample,
+    winTable: function () { var o = []; for (var m = 4; m <= 18; m++) o.push({ m: m, w: WIN[m], n: NAPCOUNT[m] }); return o; },
+    winSources: WIN_SOURCES,
     fade: FADE,
     methods: METHODS,
     sources: SOURCES,
