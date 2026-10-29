@@ -173,72 +173,128 @@ input[type=time],input[type=date]{font:500 18px var(--font-body);min-height:44px
 #sync input[type=text]{font:500 16px var(--font-body);min-height:44px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--fg);width:100%;max-width:260px}
 #sync .ok{color:var(--ok);font-weight:600}
 #sync .bad{color:var(--warn);font-weight:600}
+
+/* ---- sekmeler ---- */
+.sum{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.sum[hidden]{display:none}
+.sum .tl{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 10px 9px;min-width:0}
+.sum .k{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.sum .v{font:700 19px/1.2 var(--font-display);margin:3px 0 1px;overflow-wrap:anywhere}
+.sum .d{font-size:12px;color:var(--muted)}
+.wrap{gap:14px}
+header.top{display:flex;align-items:center;gap:12px}
+header.top .logo{width:44px;height:44px;border-radius:11px;flex:0 0 auto;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+header.top h1{font-size:22px;margin:0}
+header.top p{font-size:13px}
+body{padding-block:14px calc(84px + env(safe-area-inset-bottom,0px))}
+main{display:block}
+.tab{display:grid;gap:18px}
+.tab[hidden],.sp[hidden]{display:none}
+.sp{display:grid;gap:12px}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:4px;border-radius:12px;background:var(--surface2);margin-bottom:14px}
+.seg button{min-height:40px;border:0;border-radius:9px;background:transparent;color:var(--muted);font:600 14px var(--font-body);cursor:pointer}
+.seg button[aria-selected="true"]{background:var(--surface);color:var(--accent);box-shadow:0 1px 2px rgba(0,0,0,.18)}
+.h2s{text-transform:none;letter-spacing:0;font-weight:500}
+.steps-d{margin-top:4px}
+.steps-d summary{cursor:pointer;font-weight:600;min-height:32px;display:flex;align-items:center}
+.steps-d .steps{margin:10px 0 0}
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:10;display:grid;grid-template-columns:repeat(5,1fr);background:var(--surface);border-top:1px solid var(--line);padding:6px max(8px,env(safe-area-inset-left,0px)) calc(6px + env(safe-area-inset-bottom,0px))}
+.tabbar button{display:grid;justify-items:center;gap:2px;min-height:52px;border:0;background:transparent;color:var(--muted);font:600 11px var(--font-body);cursor:pointer;border-radius:12px}
+.tabbar svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tabbar button[aria-selected="true"]{color:var(--accent)}
+.tabbar button[aria-selected="true"] svg{stroke-width:2.3}
+.tabbar button:focus-visible,.seg button:focus-visible{outline:3px solid var(--accent);outline-offset:-3px}
+#toast{bottom:calc(84px + env(safe-area-inset-bottom,0px))}
 </style>
 </head>
 <body>
 
 <div class="wrap">
-  <header>
-    <h1>Uyku Merdiveni</h1>
-    <p id="age"></p>
+  <header class="top">
+    <img class="logo" src="icon-192.png" alt="" width="44" height="44">
+    <div><h1>Uyku Merdiveni</h1><p id="age"></p></div>
   </header>
 
-  <section id="status" aria-live="polite"></section>
-
-  <section class="card mot" id="mot" hidden></section>
-
-  <section class="card" id="stage" hidden></section>
-
-  <section>
-    <h2>Uyutma sırası</h2>
-    <ol class="steps" id="steps"></ol>
-    <h2>Destek basamakları <span style="text-transform:none;letter-spacing:0;font-weight:500">(hedefinizi dokunarak seçin)</span></h2>
-    <ul class="ladder" id="ladder"></ul>
-    <div class="ready" id="ready"></div>
-  </section>
-
-  <section class="card" id="fade" hidden></section>
-
-  <section>
-    <h2>Son kayıtlar</h2>
-    <div id="today"></div>
-  </section>
-
-  <section>
-    <h2>Son 7 gün</h2>
-    <div class="week" id="week"></div>
-    <div class="legend" id="legend"></div>
-    <p class="trend" id="trend"></p>
-  </section>
-
-  <section class="card">
-    <div class="field" style="margin:0">
-      <label for="bed">Hedef yatış saati</label>
-      <input id="bed" type="time" value="20:00">
-      <p class="sub" style="font-size:13px">Yatışı her 2-3 günde 15 dakika öne çekin, 19:00-19:30 aralığına kadar.</p>
+  <main>
+    <div class="tab" id="tab-now" role="tabpanel" aria-label="Şimdi">
+      <section id="status" aria-live="polite"></section>
+      <section id="sum" class="sum" hidden aria-label="Bugünün özeti"></section>
+      <section class="card mot" id="mot" hidden></section>
     </div>
-    <div class="field" style="margin:16px 0 0">
-      <label for="birth">Bebeğin doğum tarihi</label>
-      <input id="birth" type="date">
-      <p class="sub" style="font-size:13px">Uyku penceresi yaşa göre değişir. Bu bilgi yalnızca bu telefonda saklanır, eşinizin telefonunda da girin.</p>
+
+    <div class="tab" id="tab-ladder" role="tabpanel" aria-label="Uyut" hidden>
+      <div class="seg" role="tablist" aria-label="Uyutma bölümleri">
+        <button type="button" role="tab" data-sub="ladder" aria-selected="true">Merdiven</button>
+        <button type="button" role="tab" data-sub="fade" aria-selected="false">Kademeli</button>
+        <button type="button" role="tab" data-sub="guide" aria-selected="false">Bu ay</button>
+      </div>
+      <div class="sp" id="sp-ladder">
+        <h2>Destek basamakları <span class="h2s">(hedefinizi seçin)</span></h2>
+        <ul class="ladder" id="ladder"></ul>
+        <div class="ready" id="ready"></div>
+        <details class="card steps-d">
+          <summary>Uyutma sırası</summary>
+          <ol class="steps" id="steps"></ol>
+        </details>
+      </div>
+      <div class="sp" id="sp-fade" hidden>
+        <section class="card" id="fade" hidden></section>
+      </div>
+      <div class="sp" id="sp-guide" hidden>
+        <section class="card" id="stage" hidden></section>
+      </div>
     </div>
-  </section>
 
-  <section class="card" id="remind" hidden></section>
+    <div class="tab" id="tab-log" role="tabpanel" aria-label="Kayıtlar" hidden>
+      <section>
+        <h2>Son kayıtlar</h2>
+        <div id="today"></div>
+      </section>
+      <section>
+        <h2>Son 7 gün</h2>
+        <div class="week" id="week"></div>
+        <div class="legend" id="legend"></div>
+        <p class="trend" id="trend"></p>
+      </section>
+    </div>
 
-  <section class="card" id="music"></section>
+    <div class="tab" id="tab-sound" role="tabpanel" aria-label="Ses" hidden>
+      <section class="card" id="music"></section>
+    </div>
 
-  <section class="card" id="sync" aria-live="polite"></section>
-
-  <section class="card" id="import">
-    <h2 style="margin-bottom:8px">Kayıtları içe aktar</h2>
-    <p class="sub" style="margin:0 0 10px">Eski sayfadaki “Kayıtları kopyala” düğmesiyle kopyaladığınız metni buraya yapıştırın. Aynı kayıt ikinci kez eklenmez.</p>
-    <textarea class="expbox" id="imp-box" placeholder="Kopyaladığınız metni yapıştırın" aria-label="İçe aktarılacak kayıtlar"></textarea>
-    <div class="actions"><button class="btn sec" id="imp-btn" type="button">İçe aktar</button></div>
-  </section>
-
-  <p class="safety">Ateş, nefes tutma, morarma, kusma ya da hiç yatışmayan ağlama görürseniz doktora başvurun. Bu sayfa genel bir rehberdir, doktor önerisinin yerine geçmez.</p>
+    <div class="tab" id="tab-set" role="tabpanel" aria-label="Ayarlar" hidden>
+      <section class="card">
+        <div class="field" style="margin:0">
+          <label for="bed">Hedef yatış saati</label>
+          <input id="bed" type="time" value="20:00">
+          <p class="sub" style="font-size:13px">Yatışı her 2-3 günde 15 dakika öne çekin, 19:00-19:30 aralığına kadar.</p>
+        </div>
+        <div class="field" style="margin:16px 0 0">
+          <label for="birth">Bebeğin doğum tarihi</label>
+          <input id="birth" type="date">
+          <p class="sub" style="font-size:13px">Uyku penceresi yaşa göre değişir. Bu bilgi yalnızca bu telefonda saklanır, eşinizin telefonunda da girin.</p>
+        </div>
+      </section>
+      <section class="card" id="remind" hidden></section>
+      <section class="card" id="sync" aria-live="polite"></section>
+      <section class="card" id="import">
+        <h2 style="margin-bottom:8px">Kayıtları içe aktar</h2>
+        <p class="sub" style="margin:0 0 10px">Eski sayfadaki “Kayıtları kopyala” düğmesiyle kopyaladığınız metni buraya yapıştırın. Aynı kayıt ikinci kez eklenmez.</p>
+        <textarea class="expbox" id="imp-box" placeholder="Kopyaladığınız metni yapıştırın" aria-label="İçe aktarılacak kayıtlar"></textarea>
+        <div class="actions"><button class="btn sec" id="imp-btn" type="button">İçe aktar</button></div>
+      </section>
+      <p class="safety">Ateş, nefes tutma, morarma, kusma ya da hiç yatışmayan ağlama görürseniz doktora başvurun. Bu sayfa genel bir rehberdir, doktor önerisinin yerine geçmez.</p>
+    </div>
+  </main>
 </div>
+
+<nav class="tabbar" aria-label="Ana bölümler">
+  <button type="button" data-tab="now" aria-selected="true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span>Şimdi</span></button>
+  <button type="button" data-tab="ladder" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20h5v-4h5v-4h5V8h3"/></svg><span>Uyut</span></button>
+  <button type="button" data-tab="log" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg><span>Kayıtlar</span></button>
+  <button type="button" data-tab="sound" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg><span>Ses</span></button>
+  <button type="button" data-tab="set" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg><span>Ayarlar</span></button>
+</nav>
 
 <div id="seans" hidden role="dialog" aria-modal="true" aria-label="Uyutma seansı">
   <div class="s-top"><span id="s-stage"></span><button class="s-x" type="button" data-act="seans-kapat" aria-label="Kapat">✕</button></div>
@@ -253,6 +309,32 @@ input[type=time],input[type=date]{font:500 18px var(--font-body);min-height:44px
 <div id="sheet" hidden></div>
 <div id="toast" hidden></div>
 
+<script>
+(function(){
+  var TABS=['now','ladder','log','sound','set'],SUBS=['ladder','fade','guide'],KT='uyku-sekme',KS='uyku-alt-sekme';
+  function get(k,d){try{return localStorage.getItem(k)||d}catch(e){return d}}
+  function put(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+  function tab(n,noScroll){
+    if(TABS.indexOf(n)<0)n='now';
+    TABS.forEach(function(t){document.getElementById('tab-'+t).hidden=(t!==n)});
+    Array.prototype.forEach.call(document.querySelectorAll('.tabbar button'),function(b){b.setAttribute('aria-selected',String(b.getAttribute('data-tab')===n))});
+    put(KT,n);if(!noScroll)window.scrollTo(0,0);
+  }
+  function sub(n){
+    if(SUBS.indexOf(n)<0)n='ladder';
+    SUBS.forEach(function(t){document.getElementById('sp-'+t).hidden=(t!==n)});
+    Array.prototype.forEach.call(document.querySelectorAll('.seg button'),function(b){b.setAttribute('aria-selected',String(b.getAttribute('data-sub')===n))});
+    put(KS,n);
+  }
+  document.addEventListener('click',function(e){
+    var b=e.target.closest('button');if(!b)return;
+    if(b.hasAttribute('data-tab'))tab(b.getAttribute('data-tab'));
+    else if(b.hasAttribute('data-sub'))sub(b.getAttribute('data-sub'));
+  });
+  window.sleepTab=function(n,s){tab(n);if(s)sub(s)};
+  tab(get(KT,'now'),true);sub(get(KS,'ladder'));
+})();
+</script>
 <script src="reminders.js"></script>
 <script src="guide.js"></script>
 <script>
@@ -521,7 +603,7 @@ input[type=time],input[type=date]{font:500 18px var(--font-body);min-height:44px
 
   function render(){
     var now=new Date();
-    renderStatus(now);renderStage(now);renderMot(now);renderFade(now);renderSteps();renderReady();renderToday(now);renderWeek(now);
+    renderStatus(now);renderSummary(now);renderStage(now);renderMot(now);renderFade(now);renderSteps();renderReady();renderToday(now);renderWeek(now);
   }
   /* ---------- dokunuşu kademeli azaltma ---------- */
   function esc(t){return String(t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
@@ -536,7 +618,7 @@ input[type=time],input[type=date]{font:500 18px var(--font-body);min-height:44px
   }
   function renderFade(now){
     var el=$('fade'),a=age(now);
-    if(a.none||a.f<4){el.hidden=true;return;}
+    if(a.none){el.innerHTML='<h2 style="margin-bottom:6px">Kademeli geçiş</h2><p class="sub" style="margin:0">Önce Ayarlar sekmesinden bebeğin doğum tarihini girin.</p>';el.hidden=false;return;}
     if(a.f<6){el.innerHTML='<h2 style="margin-bottom:6px">Kademeli geçiş</h2><p class="sub" style="margin:0">Bu bölüm 6 ay ve sonrası için hazırlandı. Kaynaklar davranışsal yöntemleri genellikle 6 aydan sonra öneriyor.</p>';el.hidden=false;return;}
     var F=UykuGuide.fade,h='<h2 style="margin-bottom:6px">Kademeli geçiş: dokunuşu azalt</h2>';
     h+='<p class="sub" style="margin:0">Pat patı bir anda bırakmak yerine her aşamada biraz azaltırsınız. Aşamayı dokunarak seçin.</p><div class="stg">';
@@ -588,9 +670,30 @@ input[type=time],input[type=date]{font:500 18px var(--font-body);min-height:44px
     SE.on=false;clearInterval(SE.timer);$('seans').hidden=true;
     if(SE.lock){try{SE.lock.release()}catch(e){}SE.lock=null;}
   }
+  function renderSummary(now){
+    var el=$('sum'),t=now.getTime(),ds=dayStart(now),i,r;
+    var recent=records.filter(function(x){return x.start>=t-24*3600e3&&x.start<=t});
+    if(!recent.length){el.hidden=true;return;}
+    var napN=0,napMin=0,night=null;
+    for(i=0;i<records.length;i++){r=records[i];
+      if(r.kind==='nap'&&r.start>=ds&&r.start<=t){napN++;napMin+=((r.end||t)-r.start)/60000;}
+      if(r.kind==='night'&&r.start<=t&&r.start>=ds-16*3600e3&&(!night||r.start>night.start))night=r;
+    }
+    var nw=0,nightMin=0;
+    if(night){nightMin=((night.end||t)-night.start)/60000;
+      records.forEach(function(x){if(x.kind==='nw'&&x.start>=night.start&&x.start<=(night.end||t))nw++;});}
+    var sl=recent.filter(function(x){return isSleep(x)&&typeof x.support==='number'}),sup='—',sd='Kayıt yok';
+    if(sl.length){var av=sl.reduce(function(a,x){return a+x.support},0)/sl.length;sup=LAD[Math.round(av)].n;
+      }
+    var hv=recent.filter(function(x){return x.cry===3}).length;if(sl.length)sd=hv?hv+' kayıtta yoğun ağlama':'Ağlama yoğun değil';
+    var h='<div class="tl"><div class="k">Gündüz uykusu</div><div class="v">'+(napN?napN+' uyku':'—')+'</div><div class="d">'+(napN?dur(napMin):'Bugün kayıt yok')+'</div></div>';
+    h+='<div class="tl"><div class="k">Gece</div><div class="v">'+(night?dur(nightMin):'—')+'</div><div class="d">'+(night?(nw?nw+' uyanma':'Uyanma kaydı yok'):'Kayıt yok')+'</div></div>';
+    h+='<div class="tl"><div class="k">Destek (24 sa)</div><div class="v" style="font-size:15px">'+sup+'</div><div class="d">'+sd+'</div></div>';
+    el.innerHTML=h;el.hidden=false;
+  }
   function renderStage(now){
     var a=age(now),el=$('stage');
-    if(a.none){el.hidden=true;return;}
+    if(a.none){el.innerHTML='<h2>Bu ay</h2><p class="sub" style="margin:0">Önce Ayarlar sekmesinden bebeğin doğum tarihini girin.</p>';el.hidden=false;return;}
     var g=UykuGuide.stage(a.f),h='<h2>'+g.title+'</h2><p class="nap">'+g.nap+'</p><ul>';
     g.points.forEach(function(t){h+='<li>'+t+'</li>'});
     el.innerHTML=h+'</ul>';el.hidden=false;
@@ -740,7 +843,7 @@ input[type=time],input[type=date]{font:500 18px var(--font-body);min-height:44px
   });
   $('bed').value=settings.bed;$('birth').value=settings.birth||'';
   render();
-  setInterval(function(){if(!sheet)renderStatus(new Date());},30000);
+  setInterval(function(){if(!sheet){var n=new Date();renderStatus(n);renderSummary(n);}},30000);
 
   /* ---------- shared storage (Firebase, started by firebase-sync.js) ---------- */
   function startShared(col){
