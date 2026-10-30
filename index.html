@@ -180,8 +180,9 @@ input[type=time],input[type=date]{font:500 18px var(--font-body);min-height:44px
 .smp .sr{display:flex;justify-content:space-between;gap:10px;padding:8px 10px;border-radius:9px;background:var(--surface2);font-size:14px}
 .smp .sk{font-weight:600}
 .smp .sv{font-variant-numeric:tabular-nums}
-#sample details{margin-top:14px;font-size:14px}
+#sample details.inner{margin-top:14px;font-size:14px}
 #sample summary{cursor:pointer;font-weight:600;min-height:32px}
+#sample .sm-t{font:700 17px var(--font-display);margin-bottom:6px}
 #sample .wtab{display:grid;gap:3px;margin-top:8px}
 #sample .wr{display:grid;grid-template-columns:62px 1fr auto;gap:8px;padding:6px 8px;border-radius:8px;font-size:13px}
 #sample .wr.now{background:var(--surface2);font-weight:600}
@@ -232,6 +233,7 @@ main{display:block}
     <div class="tab" id="tab-now" role="tabpanel" aria-label="Şimdi">
       <section id="status" aria-live="polite"></section>
       <section id="sum" class="sum" hidden aria-label="Bugünün özeti"></section>
+      <section class="card" id="sample" hidden></section>
       <section class="card mot" id="mot" hidden></section>
     </div>
 
@@ -255,7 +257,6 @@ main{display:block}
       </div>
       <div class="sp" id="sp-guide" hidden>
         <section class="card" id="stage" hidden></section>
-        <section class="card" id="sample" hidden></section>
       </div>
     </div>
 
@@ -367,7 +368,7 @@ main{display:block}
   var CRY=['Hiç','Az','Orta','Çok'];
   var LS='uyku-merdiveni-v1', LSS='uyku-merdiveni-ayar';
   var records=[], dbCol=null, imported=false, pendingDel=null, sheet=null, toastTimer=null;
-  var settings={target:3,bed:'20:00',birth:'',fade:0,shift:0,wake:'07:00',naps:0};
+  var settings={target:3,bed:'20:00',birth:'',fade:0,shift:0,wake:'07:00',naps:0,winMode:'age'};
   function $(id){return document.getElementById(id)}
   try{var s=JSON.parse(localStorage.getItem(LSS)||'null'); if(s) settings=Object.assign(settings,s);}catch(e){}
   try{records=JSON.parse(localStorage.getItem(LS)||'[]');}catch(e){records=[];}
@@ -467,8 +468,8 @@ main{display:block}
 
   /* ---------- render ---------- */
   function renderStatus(now){
-    var st=derive(now),a=age(now),pw=personalWindow(a.f,now),sh=settings.shift||0,w=[pw.w[0]+sh,pw.w[1]+sh],h='',t=now.getTime(),nx=null;
-    $('age').textContent=a.none?'Bebeğinizin doğum tarihini girin':a.m+' ay '+a.d+' gün · uyanık kalma penceresi '+(w[0]/60).toString().replace('.',',')+'-'+(w[1]/60).toString().replace('.',',')+' saat'+(pw.personal?' (kayıtlarınıza göre)':'')+(sh?' ('+(sh>0?'+':'−')+Math.abs(sh)+' dk ayarlı)':'');
+    var st=derive(now),a=age(now),pw=personalWindow(a.f,now),own=settings.winMode==='own'&&pw.personal,sh=settings.shift||0,w=own?[pw.w[0]+sh,pw.w[1]+sh]:[windowFor(a.f)[0]+sh,windowFor(a.f)[1]+sh],h='',t=now.getTime(),nx=null;
+    $('age').textContent=a.none?'Bebeğinizin doğum tarihini girin':a.m+' ay '+a.d+' gün · uyanık kalma penceresi '+dur(w[0])+' – '+dur(w[1])+(own?' (bebeğinizin uykularına göre)':'')+(sh?' ('+(sh>0?'+':'−')+Math.abs(sh)+' dk ayarlı)':'');
     if(st.ongoing){
       var o=st.ongoing,el=(t-o.start)/60000;
       h+='<div class="card"><h2 style="margin-bottom:4px">Şimdi</h2>';
@@ -476,7 +477,7 @@ main{display:block}
       h+='<p class="sub">'+(o.kind==='night'?'Gece uykusu':'Gündüz uykusu')+', '+hhmm(o.start)+'’te daldı</p>';
       if(o.kind==='nap'&&el>120)h+='<p class="hint">Gündüz uykusu 2 saati geçti. Akşam yatışı için nazikçe uyandırabilirsiniz.</p>';
       if(o.kind==='night')h+='<p class="sub next">'+UykuGuide.night(a.f)+'</p>';
-      h+='<div class="actions"><button class="btn" data-act="wake">Uyandı</button><button class="btn sec" data-act="nw">Gece uyanması</button></div></div>';
+      h+='<div class="actions"><button class="btn" data-act="wake">Uyandı</button><button class="btn sec" data-act="nw">Ara uyanma</button></div></div>';
     }else if(!st.lastWake){
       h+='<div class="card"><h2 style="margin-bottom:4px">Şimdi</h2><p class="big">Son uyanış saatini girin</p>';
       h+='<p class="sub">Sıradaki uyku penceresi bu saatten hesaplanır.</p>';
@@ -502,8 +503,8 @@ main{display:block}
       if(night){
         h+='<p class="sub">Hedef yatışınız '+settings.bed+'.'+(we<bd.getTime()?' Pencere bu saatten önce kapanıyor, aşırı yorulmaması için biraz erken yatırabilirsiniz.':'')+'</p>';
       }
-      h+='<div class="shiftrow"><span class="sub">Pencere</span><button type="button" class="chip" data-act="shiftdown">Erken geliyor</button><button type="button" class="chip" data-act="shiftreset" aria-pressed="'+(!sh)+'">Normal</button><button type="button" class="chip" data-act="shiftup">Geç geliyor</button></div>';
-      h+='<div class="actions"><button class="btn" data-act="sleep">Uyudu</button><button class="btn sec" data-act="nw">Gece uyanması</button><button class="btn sec small" data-act="marker">Uyanıklığı işle</button></div></div>';
+      h+='<div class="shiftrow"><span class="sub">Pencere</span><button type="button" class="chip" data-act="winmode" data-val="age" aria-pressed="'+(!own)+'">Aya göre</button><button type="button" class="chip" data-act="winmode" data-val="own" aria-pressed="'+own+'">Bebeğime göre</button></div><div class="shiftrow"><span class="sub">Kaydır</span><button type="button" class="chip" data-act="shiftdown">Erken geliyor</button><button type="button" class="chip" data-act="shiftreset" aria-pressed="'+(!sh)+'">Normal</button><button type="button" class="chip" data-act="shiftup">Geç geliyor</button></div>';
+      h+='<div class="actions"><button class="btn" data-act="sleep">Uyudu</button><button class="btn sec" data-act="nw">Ara uyanma</button><button class="btn sec small" data-act="marker">Uyanıklığı işle</button></div></div>';
     }
     if(a.none)h='<div class="card"><h2 style="margin-bottom:8px">Önce doğum tarihi</h2><p class="sub" style="margin:0 0 10px">Uyku penceresi ve gündüz uyku sayısı bebeğin yaşına göre hesaplanır.</p><div class="actions" style="margin-top:0"><input id="birth-top" type="date" aria-label="Doğum tarihi" max="'+new Date().toISOString().slice(0,10)+'"><button class="btn" data-act="savebirth">Kaydet</button></div></div>'+h;
     var bt=document.getElementById('birth-top');var keep=bt?bt.value:'';
@@ -552,7 +553,7 @@ main{display:block}
     var lvl=typeof r.support==='number'?LAD[r.support]:null;
     if(r.kind==='wake')return {t:hhmm(r.start)+' · Uyanıklık başladı',m:'Elle işlendi'};
     if(r.kind==='nw'){
-      return {t:hhmm(r.start)+' · Gece uyanması',m:(lvl?lvl.n:'')+(r.cry!=null?' · ağlama '+CRY[r.cry].toLowerCase():'')+(r.settle?' · '+r.settle+' dk':'')};
+      return {t:hhmm(r.start)+' · Ara uyanma',m:(lvl?lvl.n:'')+(r.cry!=null?' · ağlama '+CRY[r.cry].toLowerCase():'')+(r.settle?' · '+r.settle+' dk':'')};
     }
     var end=r.end?hhmm(r.end)+' ('+dur((r.end-r.start)/60000)+')':'devam ediyor';
     return {t:hhmm(r.start)+' – '+end,m:(r.kind==='night'?'Gece':'Gündüz')+(lvl?' · '+lvl.n:'')+(r.place?' · '+r.place:'')+(r.cry!=null?' · ağlama '+CRY[r.cry].toLowerCase():'')+(r.settle?' · '+r.settle+' dk':'')};
@@ -561,7 +562,7 @@ main{display:block}
   function renderToday(now){
     var ds=dayStart(now),list=records.filter(function(r){return r.start>=ds-2*86400e3}).sort(function(a,b){return b.start-a.start});
     if(!list.length){
-      $('today').innerHTML='<div class="empty">Henüz kayıt yok. “Uyudu” ile ilk uykuyu, “Gece uyanması” ile gece uyanmalarını ekleyin. Kayıtlar burada saat sırasıyla görünür.</div>';
+      $('today').innerHTML='<div class="empty">Henüz kayıt yok. “Uyudu” ile ilk uykuyu, “Ara uyanma” ile uyanıp tekrar daldığı anları ekleyin. Kayıtlar burada saat sırasıyla görünür.</div>';
       return;
     }
     var h='',curDay=null;
@@ -685,7 +686,7 @@ main{display:block}
     var el=$('sample'),a=age(now);
     if(a.none){el.hidden=true;return;}
     var f=a.f,mo=Math.floor(f),wk=tmin(settings.wake||'07:00'),bd=tmin(settings.bed||'20:00');
-    var h='<h2 style="margin-bottom:6px;text-transform:none;letter-spacing:0;font-size:17px">Örnek gün</h2>';
+    var h='<details id="sample-d"'+(sampleOpen?' open':'')+'><summary class="sm-t">Örnek gün</summary>';
     var an=UykuGuide.autoNaps(f),cn=napsPerDay(f),sm=UykuGuide.sample(f,wk,bd,cn);
     if(!sm){h+='<p class="sub" style="margin:0">4 aydan küçük bebeklerde uyku saatleri çok değişir, saatlik bir düzen önermiyorum. Uyku işaretlerine ve uyanıklık süresine bakın.</p>';}
     else{
@@ -698,13 +699,15 @@ main{display:block}
       sm.rows.forEach(function(r){h+='<div class="sr"><span class="sk">'+r.k+'</span><span class="sv">'+clock(r.a)+(r.b!=null?' – '+clock(r.b):'')+'</span></div>';});
       h+='</div><p class="ev" style="margin:10px 0 0">Uyanıklık aralıkları yaklaşık '+dur(sm.gap)+'. Bu ay için aralık '+dur(sm.win[0])+'–'+dur(sm.win[1])+'. Yatış saati olarak ayarlardaki hedef yatışınız ('+(settings.bed||'20:00')+') kullanıldı.'+(sm.ok?'':' Aralıklar bu ayın aralığının dışında kalıyor, yatışı ya da uyku sayısını bebeğinize göre ayarlayın.')+'</p>';
     }
-    h+='<details><summary>Ay ay uyanıklık süreleri</summary><div class="wtab">';
+    h+='<details class="inner"><summary>Ay ay uyanıklık süreleri</summary><div class="wtab">';
     UykuGuide.winTable().forEach(function(r){h+='<div class="wr'+(r.m===Math.min(18,mo)?' now':'')+'"><span>'+r.m+(r.m===18?'+':'')+'. ay</span><span>'+dur(r.w[0])+'–'+dur(r.w[1])+'</span><span>'+r.n+' uyku</span></div>';});
     h+='</div><p class="ev">Aralıklar bir saat genişliğinde, sitelerin ortak aralığına göre ayarlandı. Kaynaklar birbirinden farklı; bunlar ticari uyku danışmanlığı sitelerinin rehberleri, klinik bir standart değil. Bebeğiniz erken ya da geç uykulanıyorsa Şimdi sekmesindeki “Erken geliyor / Geç geliyor” düğmeleriyle pencereyi kaydırın.</p><ul class="srcs">';
     UykuGuide.winSources.forEach(function(x){h+='<li><a href="'+x.u+'" target="_blank" rel="noopener">'+esc(x.t)+'</a></li>';});
-    h+='</ul></details>';
+    h+='</ul></details></details>';
     el.innerHTML=h;el.hidden=false;
+    var dd=$('sample-d');if(dd)dd.addEventListener('toggle',function(){sampleOpen=dd.open});
   }
+  var sampleOpen=true;
   function renderSummary(now){
     var el=$('sum'),t=now.getTime(),ds=dayStart(now),i,r;
     var recent=records.filter(function(x){return x.start>=t-24*3600e3&&x.start<=t});
@@ -765,7 +768,7 @@ main{display:block}
   }
   function drawSheet(){
     var ed=sheet.mode==='edit',m=ed?({nap:'sleep',night:'sleep',nw:'nw',wake:'marker'}[sheet.rkind]):sheet.mode,h='<div class="panel" role="dialog" aria-modal="true">';
-    var title=ed?'Kaydı düzenle':{sleep:'Uykuya daldı',wake:'Uyandı',nw:'Gece uyanması',marker:'Uyanıklık başladı'}[m];
+    var title=ed?'Kaydı düzenle':{sleep:'Uykuya daldı',wake:'Uyandı',nw:'Ara uyanma',marker:'Uyanıklık başladı'}[m];
     h+='<h3>'+title+'</h3>';
     if(ed)h+='<div class="field"><label for="f-date">Gün</label><input id="f-date" type="date" value="'+sheet.date+'"></div>';
     h+='<div class="field"><label for="f-time">'+(ed&&m==='sleep'?'Uykuya dalış saati':'Saat')+'</label><input id="f-time" type="time" value="'+sheet.time+'"></div>';
@@ -826,6 +829,7 @@ main{display:block}
     if(act==='sleep'||act==='wake'||act==='nw'||act==='marker'){pendingDel=null;openSheet(act);return;}
     if(act==='savebirth'){var bv=($('birth-top')||{}).value;if(!parseBirth(bv)||parseBirth(bv).getTime()>Date.now()){toast('Geçerli bir doğum tarihi seçin');return;}settings.birth=bv;saveSettings();$('birth').value=bv;render();return;}
     if(act==='shiftdown'||act==='shiftup'||act==='shiftreset'){settings.shift=act==='shiftreset'?0:Math.max(-60,Math.min(60,(settings.shift||0)+(act==='shiftdown'?-15:15)));saveSettings();renderStatus(new Date());toast(settings.shift?'Pencere '+(settings.shift>0?'+':'−')+Math.abs(settings.shift)+' dk kaydırıldı':'Pencere normale döndü');return;}
+    if(act==='winmode'){settings.winMode=b.getAttribute('data-val');saveSettings();var pw2=personalWindow(age(new Date()).f,new Date());renderStatus(new Date());toast(settings.winMode==='own'&&!pw2.personal?'Yeterli kayıt yok (en az 4 gündüz uykusu), şimdilik aya göre':(settings.winMode==='own'?'Bebeğinizin uykularına göre':'Aya göre'));return;}
     if(act==='napsset'){settings.naps=+b.getAttribute('data-val');saveSettings();render();return;}
     if(act==='fadeset'){settings.fade=+b.getAttribute('data-val');saveSettings();renderFade(new Date());return;}
     if(act==='fadeup'){settings.fade=Math.min(UykuGuide.fade.length-1,settings.fade+1);saveSettings();renderFade(new Date());toast('Aşama '+(settings.fade+1));return;}

@@ -25,7 +25,7 @@
       max: 6, id: 1, title: '4-6 ay: Uyku döngüleri değişiyor',
       nap: 'Genellikle günde 3-4 gündüz uykusu. Akşam yatışı erkene çekilebilir.',
       points: [
-        '4. ay civarında uyku döngüleri olgunlaşır, gece uyanmaları artabilir. Geçici bir dönemdir.',
+        '4. ay civarında uyku döngüleri olgunlaşır, gece ara uyanmaları artabilir. Geçici bir dönemdir.',
         'Dönmeyi öğrenme uykuda da denenir, bebek yüzüstü kalmak isteyebilir.',
         'Sabit bir uyku rutini kurmak için iyi zaman: banyo, besleme, ninni, yatak.',
         'Uyku eğitimine başlamadan doktorunuzla konuşun. Her bebek bu yaşta hazır olmayabilir.'
@@ -187,7 +187,7 @@
       'Gece uyanıklığı zor, ama yalnız değilsiniz. Sabah olacak.',
       'Gece nöbetinde olmanız çok değerli. Bir şekilde yeniden uyuyacak.',
       'Bu saatlerde sabır en büyük gücünüz. Siz çok iyi yapıyorsunuz.',
-      'Gece uyanmaları geçici bir dönem. Bu da geçecek.'
+      'Ara uyanmalar geçici bir dönem. Bu da geçecek.'
     ]
   };
 
