@@ -188,6 +188,7 @@ input[type=time],input[type=date]{font:500 18px var(--font-body);min-height:44px
 #sample .wr.now{background:var(--surface2);font-weight:600}
 #sample .ev{color:var(--muted);font-size:13px;margin:8px 0 0}
 #sample .srcs{margin:6px 0 0;padding-left:18px;font-size:13px}
+.seg.two{grid-template-columns:1fr 1fr;margin:8px 0 12px}
 .shiftrow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:12px}
 .sum{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .sum[hidden]{display:none}
@@ -368,7 +369,7 @@ main{display:block}
   var CRY=['Hiç','Az','Orta','Çok'];
   var LS='uyku-merdiveni-v1', LSS='uyku-merdiveni-ayar';
   var records=[], dbCol=null, imported=false, pendingDel=null, sheet=null, toastTimer=null;
-  var settings={target:3,bed:'20:00',birth:'',fade:0,shift:0,wake:'07:00',naps:0,winMode:'age'};
+  var settings={target:3,bed:'20:00',birth:'',fade:0,shift:0,wake:'07:00',naps:0,winMode:'age',fadeType:'touch'};
   function $(id){return document.getElementById(id)}
   try{var s=JSON.parse(localStorage.getItem(LSS)||'null'); if(s) settings=Object.assign(settings,s);}catch(e){}
   try{records=JSON.parse(localStorage.getItem(LS)||'[]');}catch(e){records=[];}
@@ -503,7 +504,7 @@ main{display:block}
       if(night){
         h+='<p class="sub">Hedef yatışınız '+settings.bed+'.'+(we<bd.getTime()?' Pencere bu saatten önce kapanıyor, aşırı yorulmaması için biraz erken yatırabilirsiniz.':'')+'</p>';
       }
-      h+='<div class="shiftrow"><span class="sub">Pencere</span><button type="button" class="chip" data-act="winmode" data-val="age" aria-pressed="'+(!own)+'">Aya göre</button><button type="button" class="chip" data-act="winmode" data-val="own" aria-pressed="'+own+'">Bebeğime göre</button></div><div class="shiftrow"><span class="sub">Kaydır</span><button type="button" class="chip" data-act="shiftdown">Erken geliyor</button><button type="button" class="chip" data-act="shiftreset" aria-pressed="'+(!sh)+'">Normal</button><button type="button" class="chip" data-act="shiftup">Geç geliyor</button></div>';
+      h+='<div class="shiftrow"><span class="sub">Pencere</span><button type="button" class="chip" data-act="winmode" data-val="age" aria-pressed="'+(!own)+'">Aya göre</button><button type="button" class="chip" data-act="winmode" data-val="own" aria-pressed="'+own+'">Bebeğime göre</button></div><div class="shiftrow"><span class="sub">Bebeğimin uykusu</span><button type="button" class="chip" data-act="shiftdown">Daha erken geliyor</button><button type="button" class="chip" data-act="shiftreset" aria-pressed="'+(!sh)+'">Aynı</button><button type="button" class="chip" data-act="shiftup">Daha geç geliyor</button></div>';
       h+='<div class="actions"><button class="btn" data-act="sleep">Uyudu</button><button class="btn sec" data-act="nw">Ara uyanma</button><button class="btn sec small" data-act="marker">Uyanıklığı işle</button></div></div>';
     }
     if(a.none)h='<div class="card"><h2 style="margin-bottom:8px">Önce doğum tarihi</h2><p class="sub" style="margin:0 0 10px">Uyku penceresi ve gündüz uyku sayısı bebeğin yaşına göre hesaplanır.</p><div class="actions" style="margin-top:0"><input id="birth-top" type="date" aria-label="Doğum tarihi" max="'+new Date().toISOString().slice(0,10)+'"><button class="btn" data-act="savebirth">Kaydet</button></div></div>'+h;
@@ -616,21 +617,24 @@ main{display:block}
   }
   /* ---------- dokunuşu kademeli azaltma ---------- */
   function esc(t){return String(t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+  function FLT(t){return t==='carry'?UykuGuide.fadeCarry:UykuGuide.fade}
+  function FL(){return settings.fadeType==='carry'?UykuGuide.fadeCarry:UykuGuide.fade}
   function fadeSuggestion(){
-    var st=settings.fade,last=sleepsSorted().filter(function(r){return r.fade===st}).slice(0,3);
+    var st=settings.fade,ty=settings.fadeType||'touch',last=sleepsSorted().filter(function(r){return r.fade===st&&(r.fadeT||'touch')===ty}).slice(0,3);
     if(last.length<3)return {txt:'Bu aşamada henüz 3 uyku kaydı yok. Kaydederken “Dokunuş aşaması”nı işaretleyin, ilerleme önerisi burada çıkar.'};
     var calm=last.filter(function(r){return r.cry<=1&&(!r.settle||r.settle<=25)}).length,heavy=last.filter(function(r){return r.cry===3}).length;
     if(heavy>=2&&st>0)return {txt:'Son 3 uykunun '+heavy+'’ünde ağlama yoğundu. Bir önceki aşamaya dönmek makul.',act:'fadedown',btn:'Bir önceki aşamaya dön'};
-    if(calm>=3&&st<UykuGuide.fade.length-1)return {txt:'Son 3 uyku sakin geçti. Bir sonraki aşamayı deneyebilirsiniz.',act:'fadeup',btn:'Sonraki aşamaya geç'};
-    if(calm>=3)return {txt:'Son 3 uyku sakin geçti, en hafif aşamadasınız. Bundan sonra dokunmadan yanında durmayı deneyin.'};
+    if(calm>=3&&st<FL().length-1)return {txt:'Son 3 uyku sakin geçti. Bir sonraki aşamayı deneyebilirsiniz.',act:'fadeup',btn:'Sonraki aşamaya geç'};
+    if(calm>=3)return {txt:'Son 3 uyku sakin geçti, en hafif aşamadasınız. '+(ty==='carry'?'Bundan sonra “Dokunuşu azalt” yöntemine geçebilirsiniz.':'Bundan sonra dokunmadan yanında durmayı deneyin.')};
     return {txt:'Bu aşamada biraz daha kalın. Atak ve diş günlerinde aşamayı sabit tutmak normaldir.'};
   }
   function renderFade(now){
     var el=$('fade'),a=age(now);
     if(a.none){el.innerHTML='<h2 style="margin-bottom:6px">Kademeli geçiş</h2><p class="sub" style="margin:0">Önce Ayarlar sekmesinden bebeğin doğum tarihini girin.</p>';el.hidden=false;return;}
     if(a.f<6){el.innerHTML='<h2 style="margin-bottom:6px">Kademeli geçiş</h2><p class="sub" style="margin:0">Bu bölüm 6 ay ve sonrası için hazırlandı. Kaynaklar davranışsal yöntemleri genellikle 6 aydan sonra öneriyor.</p>';el.hidden=false;return;}
-    var F=UykuGuide.fade,h='<h2 style="margin-bottom:6px">Kademeli geçiş: dokunuşu azalt</h2>';
-    h+='<p class="sub" style="margin:0">Pat patı bir anda bırakmak yerine her aşamada biraz azaltırsınız. Aşamayı dokunarak seçin.</p><div class="stg">';
+    var F=FL(),carry=settings.fadeType==='carry',h='<h2 style="margin-bottom:6px">Kademeli geçiş</h2>';
+    h+='<div class="seg two"><button type="button" role="tab" data-act="fadetype" data-val="touch" aria-selected="'+(!carry)+'">Dokunuşu azalt</button><button type="button" role="tab" data-act="fadetype" data-val="carry" aria-selected="'+carry+'">Sallamayı azalt</button></div>';
+    h+='<p class="sub" style="margin:0">'+(carry?'Ayakta sallayarak ya da yürüyerek uyutuyorsanız hareketi bir anda bırakmak yerine her aşamada biraz azaltırsınız.':'Pat patı bir anda bırakmak yerine her aşamada biraz azaltırsınız.')+' Aşamayı dokunarak seçin.</p><div class="stg">';
     F.forEach(function(f,i){h+='<button type="button" data-act="fadeset" data-val="'+i+'" aria-pressed="'+(i===settings.fade)+'"><span class="n">'+(i+1)+'</span><span><b>'+esc(f.t)+'</b>'+esc(f.d)+'</span></button>'});
     h+='</div>';
     var sg=fadeSuggestion();
@@ -648,15 +652,15 @@ main{display:block}
   /* Seans yardımcısı: pat ve mola sürelerini sessizce gösterir */
   var SE={on:false,stage:0,phase:'pat',until:0,t0:0,timer:null,lock:null};
   function seansDraw(){
-    var f=UykuGuide.fade[SE.stage];
-    $('s-stage').textContent='Aşama '+(SE.stage+1)+'/'+UykuGuide.fade.length+' · '+f.t;
+    var f=FL()[SE.stage];
+    $('s-stage').textContent='Aşama '+(SE.stage+1)+'/'+FL().length+' · '+f.t;
     $('s-desc').textContent=f.d;
-    if(!f.cyc){$('s-word').textContent=SE.stage===5?'YAKINDA':SE.stage===4?'EL':'PAT';$('s-count').textContent='';}
+    if(!f.cyc){$('s-word').textContent=f.w||(SE.stage===5?'YAKINDA':SE.stage===4?'EL':'PAT');$('s-count').textContent='';}
     $('s-el').textContent='Geçen süre '+Math.floor((Date.now()-SE.t0)/60000)+' dk';
   }
   function seansTick(){
     if(!SE.on)return;
-    var f=UykuGuide.fade[SE.stage],now=Date.now();
+    var f=FL()[SE.stage],now=Date.now();
     $('s-el').textContent='Geçen süre '+Math.floor((now-SE.t0)/60000)+' dk';
     if(!f.cyc)return;
     if(now>=SE.until){
@@ -667,11 +671,11 @@ main{display:block}
     $('s-count').textContent=Math.max(0,Math.ceil((SE.until-now)/1000))+' sn';
   }
   function seansSet(i){
-    SE.stage=Math.max(0,Math.min(UykuGuide.fade.length-1,i));SE.phase='pat';
-    var f=UykuGuide.fade[SE.stage];SE.until=Date.now()+(f.cyc?f.cyc[0]*1000:0);seansDraw();seansTick();
+    SE.stage=Math.max(0,Math.min(FL().length-1,i));SE.phase='pat';
+    var f=FL()[SE.stage];SE.until=Date.now()+(f.cyc?f.cyc[0]*1000:0);seansDraw();seansTick();
   }
   function seansOpen(){
-    SE.on=true;SE.t0=Date.now();$('seans').hidden=false;seansSet(settings.fade);
+    SE.on=true;SE.t0=Date.now();$('seans').hidden=false;seansSet(Math.min(settings.fade,FL().length-1));
     clearInterval(SE.timer);SE.timer=setInterval(seansTick,250);
     $('s-ka').textContent='';
     try{UykuKeepAwake.on().then(function(r){$('s-ka').textContent=r==='none'?'Ekran açık kalamayabilir. Telefonun ekran zaman aşımını uzatın.':'Ekran açık kalıyor.';});}catch(e){}
@@ -701,7 +705,7 @@ main{display:block}
     }
     h+='<details class="inner"><summary>Ay ay uyanıklık süreleri</summary><div class="wtab">';
     UykuGuide.winTable().forEach(function(r){h+='<div class="wr'+(r.m===Math.min(18,mo)?' now':'')+'"><span>'+r.m+(r.m===18?'+':'')+'. ay</span><span>'+dur(r.w[0])+'–'+dur(r.w[1])+'</span><span>'+r.n+' uyku</span></div>';});
-    h+='</div><p class="ev">Aralıklar bir saat genişliğinde, sitelerin ortak aralığına göre ayarlandı. Kaynaklar birbirinden farklı; bunlar ticari uyku danışmanlığı sitelerinin rehberleri, klinik bir standart değil. Bebeğiniz erken ya da geç uykulanıyorsa Şimdi sekmesindeki “Erken geliyor / Geç geliyor” düğmeleriyle pencereyi kaydırın.</p><ul class="srcs">';
+    h+='</div><p class="ev">Aralıklar bir saat genişliğinde, sitelerin ortak aralığına göre ayarlandı. Kaynaklar birbirinden farklı; bunlar ticari uyku danışmanlığı sitelerinin rehberleri, klinik bir standart değil. Bebeğiniz erken ya da geç uykulanıyorsa Şimdi sekmesindeki “Daha erken geliyor / Daha geç geliyor” düğmeleriyle pencereyi kaydırın.</p><ul class="srcs">';
     UykuGuide.winSources.forEach(function(x){h+='<li><a href="'+x.u+'" target="_blank" rel="noopener">'+esc(x.t)+'</a></li>';});
     h+='</ul></details></details>';
     el.innerHTML=h;el.hidden=false;
@@ -762,7 +766,7 @@ main{display:block}
   }
   function openSheet(mode,preset){
     var hr=new Date().getHours();
-    sheet={mode:mode,kind:(hr>=18||hr<5)?1:0,support:settings.target,place:0,cry:1,settle:15,fade:0,time:hhmm(Date.now())};
+    sheet={mode:mode,kind:(hr>=18||hr<5)?1:0,support:settings.target,place:0,cry:1,settle:15,fade:0,fadeT:settings.fadeType||'touch',time:hhmm(Date.now())};
     if(preset)Object.assign(sheet,preset);
     drawSheet();
   }
@@ -776,7 +780,7 @@ main{display:block}
     if(m==='sleep')h+='<div class="field"><span class="lb">Uyku türü</span>'+chipsHtml('kind',['Gündüz','Gece'],sheet.kind)+'</div>';
     if(m==='sleep'||m==='nw'){
       h+='<div class="field"><span class="lb">Hangi destekle daldı</span>'+chipsHtml('support',LAD.map(function(x){return x.n}),sheet.support)+'</div>';
-      h+='<div class="field"><span class="lb">Dokunuş aşaması (varsa)</span>'+chipsHtml('fade',['Yok','1','2','3','4','5','6'],sheet.fade||0)+'</div>';
+      h+='<div class="field"><span class="lb">'+((sheet.fadeT==='carry')?'Sallama':'Dokunuş')+' aşaması (varsa)</span>'+chipsHtml('fade',['Yok'].concat(FLT(sheet.fadeT).map(function(x,i){return String(i+1)})),sheet.fade||0)+'</div>';
     }
     if(m==='sleep')h+='<div class="field"><span class="lb">Nerede daldı</span>'+chipsHtml('place',PLACES,sheet.place)+'</div>';
     if(m==='sleep'||m==='nw'){
@@ -790,7 +794,7 @@ main{display:block}
   function openEdit(id){
     var r=null;records.forEach(function(x){if(x.id===id)r=x});if(!r)return;
     var d=new Date(r.start),ds=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()),pi=PLACES.indexOf(r.place);
-    sheet={mode:'edit',id:id,rkind:r.kind,kind:r.kind==='night'?1:0,support:typeof r.support==='number'?r.support:settings.target,place:pi<0?0:pi,cry:r.cry!=null?r.cry:1,settle:r.settle||0,fade:typeof r.fade==='number'?r.fade+1:0,date:ds,time:hhmm(r.start),endTime:r.end?hhmm(r.end):'',hasEnd:!!r.end};
+    sheet={mode:'edit',id:id,rkind:r.kind,kind:r.kind==='night'?1:0,support:typeof r.support==='number'?r.support:settings.target,place:pi<0?0:pi,cry:r.cry!=null?r.cry:1,settle:r.settle||0,fade:typeof r.fade==='number'?r.fade+1:0,fadeT:r.fadeT||'touch',date:ds,time:hhmm(r.start),endTime:r.end?hhmm(r.end):'',hasEnd:!!r.end};
     drawSheet();
   }
   function saveEdit(){
@@ -798,9 +802,9 @@ main{display:block}
     if(isNaN(start)){toast('Gün ve saati kontrol edin');return;}
     patch.start=start;
     if(s.rkind==='nap'||s.rkind==='night'){
-      patch.kind=s.kind?'night':'nap';patch.support=s.support;patch.place=PLACES[s.place];patch.cry=s.cry;patch.settle=s.settle;patch.fade=s.fade>0?s.fade-1:null;
+      patch.kind=s.kind?'night':'nap';patch.support=s.support;patch.place=PLACES[s.place];patch.cry=s.cry;patch.settle=s.settle;patch.fade=s.fade>0?s.fade-1:null;patch.fadeT=s.fade>0?s.fadeT:null;
       if(s.hasEnd){var end=atTime(s.date,s.endTime);if(isNaN(end)){toast('Uyanış saatini kontrol edin');return;}if(end<=start)end+=86400e3;patch.end=end;}
-    }else if(s.rkind==='nw'){patch.support=s.support;patch.cry=s.cry;patch.settle=s.settle;patch.fade=s.fade>0?s.fade-1:null;}
+    }else if(s.rkind==='nw'){patch.support=s.support;patch.cry=s.cry;patch.settle=s.settle;patch.fade=s.fade>0?s.fade-1:null;patch.fadeT=s.fade>0?s.fadeT:null;}
     var id=s.id;closeSheet();updRec(id,patch);toast('Kayıt güncellendi');
   }
   function closeSheet(){sheet=null;$('sheet').hidden=true;$('sheet').innerHTML='';}
@@ -809,13 +813,13 @@ main{display:block}
     if(m==='edit'){saveEdit();return;}
     ts=tsFromInput(sheet.time);
     if(m==='sleep'){
-      addRec({kind:sheet.kind?'night':'nap',start:ts,end:null,support:sheet.support,place:PLACES[sheet.place],cry:sheet.cry,settle:sheet.settle,fade:sheet.fade>0?sheet.fade-1:null});
+      addRec({kind:sheet.kind?'night':'nap',start:ts,end:null,support:sheet.support,place:PLACES[sheet.place],cry:sheet.cry,settle:sheet.settle,fade:sheet.fade>0?sheet.fade-1:null,fadeT:sheet.fade>0?sheet.fadeT:null});
     }else if(m==='wake'){
       if(!st.ongoing){closeSheet();return;}
       if(ts<=st.ongoing.start){toast('Uyanış saati uykunun başlangıcından önce olamaz');return;}
       updRec(st.ongoing.id,{end:ts});
     }else if(m==='nw'){
-      addRec({kind:'nw',start:ts,support:sheet.support,cry:sheet.cry,settle:sheet.settle,fade:sheet.fade>0?sheet.fade-1:null});
+      addRec({kind:'nw',start:ts,support:sheet.support,cry:sheet.cry,settle:sheet.settle,fade:sheet.fade>0?sheet.fade-1:null,fadeT:sheet.fade>0?sheet.fadeT:null});
     }else if(m==='marker'){
       addRec({kind:'wake',start:ts});
     }
@@ -831,14 +835,15 @@ main{display:block}
     if(act==='shiftdown'||act==='shiftup'||act==='shiftreset'){settings.shift=act==='shiftreset'?0:Math.max(-60,Math.min(60,(settings.shift||0)+(act==='shiftdown'?-15:15)));saveSettings();renderStatus(new Date());toast(settings.shift?'Pencere '+(settings.shift>0?'+':'−')+Math.abs(settings.shift)+' dk kaydırıldı':'Pencere normale döndü');return;}
     if(act==='winmode'){settings.winMode=b.getAttribute('data-val');saveSettings();var pw2=personalWindow(age(new Date()).f,new Date());renderStatus(new Date());toast(settings.winMode==='own'&&!pw2.personal?'Yeterli kayıt yok (en az 4 gündüz uykusu), şimdilik aya göre':(settings.winMode==='own'?'Bebeğinizin uykularına göre':'Aya göre'));return;}
     if(act==='napsset'){settings.naps=+b.getAttribute('data-val');saveSettings();render();return;}
+    if(act==='fadetype'){settings.fadeType=b.getAttribute('data-val');settings.fade=Math.min(settings.fade,FL().length-1);saveSettings();renderFade(new Date());return;}
     if(act==='fadeset'){settings.fade=+b.getAttribute('data-val');saveSettings();renderFade(new Date());return;}
-    if(act==='fadeup'){settings.fade=Math.min(UykuGuide.fade.length-1,settings.fade+1);saveSettings();renderFade(new Date());toast('Aşama '+(settings.fade+1));return;}
+    if(act==='fadeup'){settings.fade=Math.min(FL().length-1,settings.fade+1);saveSettings();renderFade(new Date());toast('Aşama '+(settings.fade+1));return;}
     if(act==='fadedown'){settings.fade=Math.max(0,settings.fade-1);saveSettings();renderFade(new Date());toast('Aşama '+(settings.fade+1));return;}
     if(act==='seans-ac'){seansOpen();return;}
     if(act==='seans-kapat'){seansClose();return;}
     if(act==='seans-geri'){seansSet(SE.stage-1);return;}
     if(act==='seans-ileri'){seansSet(SE.stage+1);return;}
-    if(act==='seans-uyudu'){var fs=SE.stage;seansClose();openSheet('sleep',{support:2,fade:fs+1});return;}
+    if(act==='seans-uyudu'){var fs=SE.stage;seansClose();openSheet('sleep',{support:settings.fadeType==='carry'?4:2,fade:fs+1,fadeT:settings.fadeType||'touch'});return;}
     if(act==='cancel'){closeSheet();return;}
     if(act==='save'){saveSheet();return;}
     if(act==='lower'){settings.target=Math.max(0,settings.target-1);saveSettings();render();return;}

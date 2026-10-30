@@ -200,6 +200,14 @@
     { t: 'Sadece el', d: 'Pat yok. Elin sırtında ya da göğsünde sabit durur.', cyc: null },
     { t: 'El yakında', d: 'Elin beşikte, dokunmadan yakında. Ağlarsa bir önceki aşamaya dön.', cyc: null }
   ];
+  /* Ayakta sallayarak ya da yürüyerek uyutanlar için: hareketi kademeli azaltma (bu uyarlamanın ayrı bir çalışması yok). */
+  var FADE_CARRY = [
+    { t: 'Ayakta yürüyerek sallama', d: 'Şimdiki gibi: ayakta, yürüyerek, ritmik sallama.', cyc: null, w: 'YÜRÜ' },
+    { t: 'Ayakta yerinde sallama', d: 'Yürümeden, olduğun yerde ayakta. Her seferinde biraz daha yavaş ve küçük sallama.', cyc: null, w: 'SALLA' },
+    { t: 'Oturarak sallama', d: 'Koltukta ya da sandalyede otur, dizlerinde ya da gövdenle hafifçe salla. Hareketi giderek küçült.', cyc: null, w: 'OTUR' },
+    { t: 'Kucakta hareketsiz', d: 'Oturarak ya da dururken sallama yok. Sadece kucak, yumuşak pat ya da şş.', cyc: null, w: 'KUCAK' },
+    { t: 'Uykulu halde beşiğe indir', d: 'Gözler kapanırken beşiğe indir, elini üstünde tut. Bundan sonra "Dokunuşu azalt" aşamalarına geç.', cyc: null, w: 'İNDİR' }
+  ];
   var METHODS = [
     { t: 'Kademeli geri çekilme (dokunuşu azaltma)',
       s: ['Bebek beşikte, sen yanındasın. Kaldırmadan dokunur, pat yaparsın.',
@@ -265,6 +273,7 @@
 
   window.UykuGuide = {
     stage: stage,
+    fadeCarry: FADE_CARRY,
     autoNaps: autoNaps,
     win: win,
     sample: sample,
