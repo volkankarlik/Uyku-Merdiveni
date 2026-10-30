@@ -634,7 +634,7 @@ main{display:block}
     if(a.f<6){el.innerHTML='<h2 style="margin-bottom:6px">Kademeli geçiş</h2><p class="sub" style="margin:0">Bu bölüm 6 ay ve sonrası için hazırlandı. Kaynaklar davranışsal yöntemleri genellikle 6 aydan sonra öneriyor.</p>';el.hidden=false;return;}
     var F=FL(),carry=settings.fadeType==='carry',h='<h2 style="margin-bottom:6px">Kademeli geçiş</h2>';
     h+='<div class="seg two"><button type="button" role="tab" data-act="fadetype" data-val="touch" aria-selected="'+(!carry)+'">Dokunuşu azalt</button><button type="button" role="tab" data-act="fadetype" data-val="carry" aria-selected="'+carry+'">Sallamayı azalt</button></div>';
-    h+='<p class="sub" style="margin:0">'+(carry?'Ayakta sallayarak ya da yürüyerek uyutuyorsanız hareketi bir anda bırakmak yerine her aşamada biraz azaltırsınız.':'Pat patı bir anda bırakmak yerine her aşamada biraz azaltırsınız.')+' Aşamayı dokunarak seçin.</p><div class="stg">';
+    h+='<p class="sub" style="margin:0">'+(carry?'Bacaklarınızın üzerinde sallayarak uyutuyorsanız sallamayı bir anda bırakmak yerine her aşamada biraz azaltırsınız.':'Pat patı bir anda bırakmak yerine her aşamada biraz azaltırsınız.')+' Aşamayı dokunarak seçin.</p><div class="stg">';
     F.forEach(function(f,i){h+='<button type="button" data-act="fadeset" data-val="'+i+'" aria-pressed="'+(i===settings.fade)+'"><span class="n">'+(i+1)+'</span><span><b>'+esc(f.t)+'</b>'+esc(f.d)+'</span></button>'});
     h+='</div>';
     var sg=fadeSuggestion();

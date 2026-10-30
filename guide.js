@@ -200,13 +200,13 @@
     { t: 'Sadece el', d: 'Pat yok. Elin sırtında ya da göğsünde sabit durur.', cyc: null },
     { t: 'El yakında', d: 'Elin beşikte, dokunmadan yakında. Ağlarsa bir önceki aşamaya dön.', cyc: null }
   ];
-  /* Ayakta sallayarak ya da yürüyerek uyutanlar için: hareketi kademeli azaltma (bu uyarlamanın ayrı bir çalışması yok). */
+  /* Bacaklarda (uzanmış bacaklar üzerinde) sallayarak uyutanlar için hareketi kademeli azaltma (bu uyarlamanın ayrı bir çalışması yok). */
   var FADE_CARRY = [
-    { t: 'Ayakta yürüyerek sallama', d: 'Şimdiki gibi: ayakta, yürüyerek, ritmik sallama.', cyc: null, w: 'YÜRÜ' },
-    { t: 'Ayakta yerinde sallama', d: 'Yürümeden, olduğun yerde ayakta. Her seferinde biraz daha yavaş ve küçük sallama.', cyc: null, w: 'SALLA' },
-    { t: 'Oturarak sallama', d: 'Koltukta ya da sandalyede otur, dizlerinde ya da gövdenle hafifçe salla. Hareketi giderek küçült.', cyc: null, w: 'OTUR' },
-    { t: 'Kucakta hareketsiz', d: 'Oturarak ya da dururken sallama yok. Sadece kucak, yumuşak pat ya da şş.', cyc: null, w: 'KUCAK' },
-    { t: 'Uykulu halde beşiğe indir', d: 'Gözler kapanırken beşiğe indir, elini üstünde tut. Bundan sonra "Dokunuşu azalt" aşamalarına geç.', cyc: null, w: 'İNDİR' }
+    { t: 'Bacaklarda sallama', d: 'Şimdiki gibi: bacakların uzanmış, bebek bacaklarında yatıyor, ritmik sallama.', cyc: null, w: 'SALLA' },
+    { t: 'Yavaş ve küçük sallama', d: 'Aynı pozisyon, sallamayı her seferinde biraz daha yavaş ve küçük yap.', cyc: null, w: 'YAVAŞ' },
+    { t: 'Bacaklarda hareketsiz', d: 'Sallama yok. Bebek bacaklarında yatıyor, sadece yumuşak pat ya da şş.', cyc: null, w: 'DUR' },
+    { t: 'Yanına yatırma', d: 'Gözler kapanırken bebeği yatağa ya da beşiğe, hemen yanına kaydır. Bir elin üstünde, diğer elin ya da bacağın temas halinde olsun.', cyc: null, w: 'YANINA' },
+    { t: 'Yatakta dokunuş', d: 'Bacak teması yok, sadece elin üstünde. Bundan sonra "Dokunuşu azalt" aşamalarına geç.', cyc: null, w: 'EL' }
   ];
   var METHODS = [
     { t: 'Kademeli geri çekilme (dokunuşu azaltma)',
