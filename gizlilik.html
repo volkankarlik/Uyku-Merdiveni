@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gizlilik Politikası · Uyku Merdiveni</title>
+<style>
+:root{--bg:#EDF0F3;--fg:#17212B;--muted:#556474;--card:#fff;--line:#CAD3DC;--accent:#1F6F78}
+@media (prefers-color-scheme:dark){:root{--bg:#0E151C;--fg:#E6EDF3;--muted:#93A3B3;--card:#172029;--line:#2D3B48;--accent:#6CC4C6}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif;padding:20px 16px 56px}
+main{max-width:720px;margin:0 auto;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px}
+h1{font-size:26px;line-height:1.2;margin:0 0 4px}
+h2{font-size:18px;margin:28px 0 6px}
+p,li{margin:6px 0}
+ul{padding-left:20px}
+.sub{color:var(--muted);font-size:14px}
+a{color:var(--accent)}
+</style>
+</head>
+<body>
+<main>
+<h1>Gizlilik Politikası</h1>
+<p class="sub">Uyku Merdiveni · Son güncelleme: 31 Ekim 2026</p>
+
+<p>Uyku Merdiveni, ebeveynlerin bebeklerinin uyku kayıtlarını tutmasına ve uyku düzenini takip etmesine yardımcı olan bir uygulamadır. Bu sayfa, uygulamanın hangi bilgileri nasıl kullandığını açıklar. Uygulama ebeveynler içindir, çocukların kendi başına kullanması için tasarlanmamıştır.</p>
+
+<h2>Geliştirici</h2>
+<p>[AD SOYAD]<br>İletişim: <a href="mailto:[E-POSTA ADRESİ]">[E-POSTA ADRESİ]</a></p>
+
+<h2>Hangi bilgiler tutulur?</h2>
+<p>Uygulamaya sizin girdiğiniz bilgiler tutulur:</p>
+<ul>
+<li><b>Uyku kayıtları:</b> uyku ve uyanma saatleri, uykuya dalma süresi, kullanılan destek basamağı, uyuduğu yer, ağlama düzeyi, ara uyanmalar ve kademeli geçiş aşaması.</li>
+<li><b>Ayarlar:</b> bebeğin doğum tarihi, bebeğin adı (isteğe bağlı), hedef yatış saati, bildirim tercihleri ve diğer uygulama ayarları.</li>
+<li><b>Ses dosyaları:</b> uygulamaya kendi eklediğiniz müzik ve masal dosyaları.</li>
+</ul>
+<p>Uygulama sizden ad, e-posta, telefon numarası, konum, kişi listesi, fotoğraf ya da ödeme bilgisi istemez. Hesap oluşturmanız gerekmez.</p>
+
+<h2>Bilgiler nerede saklanır?</h2>
+<ul>
+<li><b>Cihazınızda:</b> Ayarlar (doğum tarihi, bebeğin adı, tercihler) ve eklediğiniz ses dosyaları yalnızca telefonunuzda saklanır, sunucuya gönderilmez.</li>
+<li><b>Ortak kayıt (isteğe bağlı):</b> Eşinizle kayıtları paylaşmak için bir aile kodu oluşturursanız, <b>uyku kayıtları</b> Google Firebase (Cloud Firestore) üzerinde, bu aile koduna bağlı olarak saklanır. Bebeğin adı ve doğum tarihi bu kayıtlara dahil edilmez. Aile koduyla bağlanan herkes bu kayıtları görebilir ve değiştirebilir, bu yüzden kodu yalnızca güvendiğiniz kişilerle paylaşın.</li>
+<li><b>Anonim kimlik:</b> Ortak kayıt kullanıldığında Firebase Authentication, cihaza rastgele bir anonim kimlik atar. Bu kimlik sizi kişisel olarak tanımlamaz.</li>
+</ul>
+<p>Ortak kayıt özelliğini hiç kurmazsanız tüm kayıtlar yalnızca telefonunuzda kalır.</p>
+
+<h2>Bildirimler</h2>
+<p>Uygulama, uyku vakti ve bebeğin yanına gitme hatırlatmaları için cihaz üzerinde bildirim zamanlar. Bildirimler telefonunuzda oluşturulur, bir sunucudan gönderilmez. Bildirim iznini istediğiniz zaman telefon ayarlarından kapatabilirsiniz.</p>
+
+<h2>Üçüncü taraf hizmetler</h2>
+<ul>
+<li><b>Google Firebase:</b> Ortak kayıt için kullanılır. Google'ın <a href="https://policies.google.com/privacy">gizlilik politikası</a> geçerlidir.</li>
+<li><b>Google Fonts:</b> Yazı tiplerini yüklemek için uygulama Google'ın sunucularına bağlanır. Bu sırada IP adresiniz Google tarafından görülebilir.</li>
+</ul>
+<p>Uygulamada reklam, reklam kimliği, analiz ya da izleme aracı yoktur. Bilgileriniz satılmaz ve reklam amacıyla kullanılmaz.</p>
+
+<h2>Bilgilerin saklanma süresi ve silinmesi</h2>
+<ul>
+<li>Kayıtlar, siz silene kadar saklanır. Uygulamadaki Kayıtlar bölümünden tek tek silebilirsiniz.</li>
+<li>Cihazdaki bilgiler, uygulamayı silmenizle ya da uygulama verilerini temizlemenizle kaldırılır.</li>
+<li>Ortak kayıtlarınızın sunucudan tamamen silinmesini isterseniz yukarıdaki e-posta adresine aile kodunuzla birlikte yazın. Kodu uygulamada değiştirmek eski kayıtları silmez, yalnızca yeni bir kayda geçer.</li>
+</ul>
+
+<h2>Güvenlik</h2>
+<p>Ortak kayıtlar Firebase üzerinde şifreli bağlantıyla aktarılır ve erişim, aile kodunu bilen ve anonim oturum açmış cihazlarla sınırlıdır. Hiçbir sistem tamamen risksiz değildir, bu yüzden aile kodunu kimseyle paylaşmamanızı öneririz.</p>
+
+<h2>Çocukların gizliliği</h2>
+<p>Uygulamayı ebeveynler kullanır. 13 yaşın altındaki çocuklardan bilerek bilgi toplamayız. Bebeğe ilişkin girdiğiniz bilgiler sizin sorumluluğunuzdadır ve yalnızca yukarıda anlatılan amaçla kullanılır.</p>
+
+<h2>Tıbbi uyarı</h2>
+<p>Uygulamadaki bilgiler genel rehberlik amaçlıdır, doktor ya da uzman önerisinin yerine geçmez. Bebeğinizin sağlığıyla ilgili bir endişeniz varsa çocuk doktorunuza başvurun.</p>
+
+<h2>Haklarınız</h2>
+<p>6698 sayılı Kişisel Verilerin Korunması Kanunu kapsamında verilerinize erişme, düzeltme ve silinmesini isteme hakkına sahipsiniz. Bunun için yukarıdaki e-posta adresiyle iletişime geçebilirsiniz.</p>
+
+<h2>Değişiklikler</h2>
+<p>Bu politika güncellenirse yeni hâli bu sayfada yayımlanır ve yukarıdaki tarih değişir.</p>
+</main>
+</body>
+</html>
